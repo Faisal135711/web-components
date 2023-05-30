@@ -2,6 +2,8 @@ class Modal extends HTMLElement {
   constructor() {
     super();
 
+    this.isOpen = false;
+
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `
       <style>
@@ -20,7 +22,7 @@ class Modal extends HTMLElement {
         #modal {
           z-index: 20;
           position: fixed;
-          top: 15vh;
+          top: 10vh;
           left: 25%;
           width: 50%;
           background: white;
@@ -31,14 +33,17 @@ class Modal extends HTMLElement {
           justify-content: space-between;
           opacity: 0;
           pointer-events: none;
+          transition: all 0.3s ease-out;
         }
 
         header {
           padding: 1rem;
+          border-bottom: 1px solid #ccc;
         }
 
         header h1 {
           font-size: 1.25rem;
+          margin: 0;
         }
 
         #main {
@@ -61,11 +66,15 @@ class Modal extends HTMLElement {
           opacity: 1;
           pointer-events: all;
         }
+
+        :host([open]) #modal {
+          top: 15vh;
+        }
       </style>
       <div id="backdrop"></div>
       <div id="modal">
         <header>
-          <h1>Please Confirm</h1>
+          <slot name="title"></slot>
         </header>
 
         <section id="main">
@@ -73,11 +82,25 @@ class Modal extends HTMLElement {
         </section>
 
         <section id="actions">
-          <button>Cancel</button>
-          <button>Okay</button>
+          <button id="cancel-btn">Cancel</button>
+          <button id="confirm-btn">Okay</button>
         </section>
       </div>
     `;
+
+    const slots = this.shadowRoot.querySelectorAll("slot");
+    slots[1].addEventListener("slotchange", (event) => {
+      console.dir(slots[1].assignedNodes());
+    });
+
+    const cancelButton = this.shadowRoot.querySelector("#cancel-btn");
+    const confirmButton = this.shadowRoot.querySelector("#confirm-btn");
+
+    cancelButton.addEventListener("click", this.cancel.bind(this));
+    confirmButton.addEventListener("click", this.confirm.bind(this));
+
+    const backdrop = this.shadowRoot.querySelector("#backdrop");
+    backdrop.addEventListener("click", this.cancel.bind(this));
   }
 
   // attributeChangedCallback(name, oldValue, newValue) {
@@ -94,6 +117,32 @@ class Modal extends HTMLElement {
   // static get observedAttributes() {
   //   return ["open"];
   // }
+
+  open() {
+    this.setAttribute("open", "");
+    this.isOpen = true;
+  }
+
+  hide() {
+    if (this.hasAttribute("open")) {
+      this.removeAttribute("open");
+    }
+    this.isOpen = false;
+  }
+
+  cancel(event) {
+    this.hide();
+
+    const cancelEvent = new Event("cancel", { bubbles: true, composed: true });
+    event.target.dispatchEvent(cancelEvent);
+  }
+
+  confirm(event) {
+    this.hide();
+
+    const confirmEvent = new Event("confirm");
+    this.dispatchEvent(confirmEvent);
+  }
 }
 
 customElements.define("fa-modal", Modal);

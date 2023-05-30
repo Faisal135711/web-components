@@ -19,6 +19,7 @@
   </head>
   <body>
     <fa-modal>
+      <h1 slot="title">Please Confirm</h1>
       <p>With your confirmation you agree to pay the amount.</p>
     </fa-modal>
     <p>Please confirm your choice</p>
@@ -28,8 +29,18 @@
       const confirmButton = document.querySelector("button");
       const modal = document.querySelector("fa-modal");
 
+      modal.addEventListener("confirm", () => {
+        console.log("Confirmed...");
+      });
+
+      modal.addEventListener("cancel", () => {
+        console.log("Cancel...");
+      });
+
       confirmButton.addEventListener("click", () => {
-        modal.setAttribute("open", "");
+        if (!this.isOpen) {
+          modal.open();
+        }
       });
     </script>
   </body>
