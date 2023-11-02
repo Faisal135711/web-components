@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+</head>
+<body>
+<input-form></input-form>
+<todo-list></todo-list>
+
+<script type="module">
+  class InputForm extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = `
+            <form id="todoForm">
+              <input
+                type="text"
+                id="todoInput"
+                placeholder="Add a new todo"
+              />
+              <button type="submit">Add</button>
+            </form>
+          `;
+
+      this.todoForm = this.shadowRoot.querySelector('#todoForm');
+      this.todoInput = this.shadowRoot.querySelector('#todoInput');
+
+      this.todoForm.addEventListener('submit', this.addTodo.bind(this));
+    }
+
+    addTodo(event) {
+      event.preventDefault();
+      const text = this.todoInput.value.trim();
+      if (text) {
+        const todoEvent = new CustomEvent('addtodo', { detail: text });
+        this.dispatchEvent(todoEvent);
+        this.todoInput.value = '';
+      }
+    }
+  }
+
+  class TodoList extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.todos = [];
+      this.shadowRoot.innerHTML = `
+            <ul id="todoList">
+              <!-- ToDo items will be inserted here -->
+            </ul>
+          `;
+    }
+
+    addTodo(todoText) {
+      this.todos.push(todoText);
+      this.displayTodos();
+    }
+
+    displayTodos() {
+      const todoList = this.shadowRoot.querySelector('#todoList');
+      todoList.innerHTML = '';
+
+      this.todos.forEach((todoText, index) => {
+        const todoItem = document.createElement('todo-item');
+        todoItem.setAttribute('text', todoText);
+        todoItem.setAttribute('index', index);
+        todoList.appendChild(todoItem);
+      });
+    }
+  }
+
+  class TodoItem extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = `
+            <li>
+              <span id="todoText"></span>
+              <button id="removeButton">Remove</button>
+            </li>
+          `;
+
+      this.todoText = this.shadowRoot.querySelector('#todoText');
+      this.removeButton = this.shadowRoot.querySelector('#removeButton');
+
+      this.removeButton.addEventListener('click', this.removeTodo.bind(this));
+    }
+
+    connectedCallback() {
+      this.todoText.textContent = this.getAttribute('text');
+    }
+
+    removeTodo() {
+      const index = this.getAttribute('index');
+      const removeEvent = new CustomEvent('removetodo', { detail: index });
+      this.dispatchEvent(removeEvent);
+    }
+  }
+
+  customElements.define('input-form', InputForm);
+  customElements.define('todo-list', TodoList);
+  customElements.define('todo-item', TodoItem);
+
+  const inputForm = document.querySelector('input-form');
+  const todoList = document.querySelector('todo-list');
+
+  inputForm.addEventListener('addtodo', (event) => {
+    todoList.addTodo(event.detail);
+  });
+
+  todoList.addEventListener('removetodo', (event) => {
+    todoList.todos.splice(event.detail, 1);
+    todoList.displayTodos();
+  });
+</script>
+</body>
+</html>
